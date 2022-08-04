@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Répartition des objets autour d'un point</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://unpkg.com/maplibre-gl@2.1.9/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@2.1.9/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<style>
+.marker {
+display: block;
+border: none;
+border-radius: 50%;
+cursor: pointer;
+padding: 0;
+}
+</style>
+<div id="map"></div>
+<script>
+// POUR LA CARTE DE BASE AVEC MARKER, VOIR https://gitlab.huma-num.fr/bmericskay/maplibre/-/blob/master/Basemapsmenu.html
+// POUR LES ICONES PERSONNALISES, VOIR https://gitlab.huma-num.fr/bmericskay/maplibre/-/blob/master/Basemapsmenu.html
+// ICONE PERSONNALISEE dans le domaine public https://freesvg.org/img/15916332341591632467eco-systemedic-windmill.png
+const obs_point= [4.2261, 47.6683] // le point d'observation
+
+const poi_point=new Array( [4.2661, 47.6683],[4.2661, 47.62361183],[4.337778, 47.623611]) // les points d'interet
+
+// DETERMINATION DES COORDONNEES POLAIRES DANS LE REFERENTIEL CENTRE SUR LE POINT D OBSERVATION
+
+// calcul de la distance à partir de la latitude et de la longitude
+// http://villemin.gerard.online.fr/aGeograp/Distance.htm (2e méthode loi des sinus)
+// d = 6371 x arccos (sin(latitudeA)xsin(latitudeB)+cos(latitudeA)cos(latitudeB)cos(longitudeB-longitudeA)
+function distance(pointA, pointB){
+	const latA=pointA[1];
+	const latB=pointB[1];
+	const lonA=pointA[0];
+	const lonB=pointB[0];
+	return (6371*Math.acos(Math.sin(latA*Math.PI/180)*Math.sin(latB*Math.PI/180)+Math.cos(latA*Math.PI/180)*Math.cos(latB*Math.PI/180)*Math.cos((lonB-lonA)*Math.PI/180)));
+}
+// window.alert("Distance "+distance(obs_point,poi_point[0]));
+// window.alert("Distance "+distance(obs_point,poi_point[1]));
+function angle(pointA, pointB){
+	// window.alert("on est dans la fonction0");
+	let angleout=0;
+	// window.alert("on est dans la fonction1 avant A"+pointA);
+	const latA=pointA[1];
+	//window.alert("on est dans la fonction2 avant B"+pointB);
+	const latB=pointB[1];
+	// window.alert("on est dans la fonction3");
+	const lonA=pointA[0];
+	// window.alert("on est dans la fonction4");
+	const lonB=pointB[0];
+	// window.alert("on est dans la fonction5");
+	// window.alert("type A : "+typeof(pointA)); // pointA est un objet
+	// window.alert("test fixe "+distance(obs_point,poi_point[0]))
+	// window.alert("test avec A et B"+distance(pointA, pointB));
+	// en suivant le méridien (même longitude), on a le cosinus de l'angle
+	// window.alert("on est dans la fonction6");
+	let meridien=6371*Math.acos(Math.sin(latA*Math.PI/180)*Math.sin(latB*Math.PI/180)+Math.cos(latA*Math.PI/180)*Math.cos(latB*Math.PI/180));
+	// window.alert("on est dans la fonction7");
+	// en suivant le parallèle (même latitude), on a le sinus de l'angle
+	let parallele=6371*Math.acos(Math.sin(latA*Math.PI/180)*Math.sin(latA*Math.PI/180)+Math.cos(latA*Math.PI/180)*Math.cos(latA*Math.PI/180)*Math.cos((lonB-lonA)*Math.PI/180));
+	// on determine l'angle avec le sinus et cosinus
+	let anglemajeur=180*Math.acos(meridien/distance(pointA, pointB))/Math.PI; // Arccos répond dans O,PI et on recale dans 0,180
+	// window.alert("on est dans la fonction8");
+	if(lonB==lonA){
+				if (latB>=latA) {angleout=90} else {angleout=270}
+				 }
+		else if (latB>latA) {angleout=anglemajeur} // sur 0,PI, B est au-dessus de A 
+		else {angleout=360-anglemajeur};
+		// window.alert("on a un angle majeur de "+anglemajeur);
+	return angleout;
+}
+
+window.alert("on a un angle de "+angle(obs_point,poi_point[1]));
+// window.alert(angle(poi_point[0],poi_point[1]));
+// window.alert(angle(poi_point[1],poi_point[2]));
+var geojson = {
+'type': 'FeatureCollection',
+'features': [
+{
+'type': 'Feature',
+'properties': {
+'message': 'Foo',
+'iconSize': [60, 60]
+},
+'geometry': {
+'type': 'Point',
+'coordinates': poi_point[0]
+}
+},
+{
+'type': 'Feature',
+'properties': {
+'message': 'Bar',
+'iconSize': [50, 50]
+},
+'geometry': {
+'type': 'Point',
+'coordinates': poi_point[1]
+}
+},
+{
+'type': 'Feature',
+'properties': {
+'message': 'Baz',
+'iconSize': [40, 40]
+},
+'geometry': {
+'type': 'Point',
+'coordinates': poi_point[2]
+}
+}
+]
+};
+
+var map = new maplibregl.Map({
+container: 'map', // container id
+// style: 'https://demotiles.maplibre.org/style.json', // style URL
+style: 'https://geoserveis.icgc.cat/contextmaps/osm-bright.json',
+center: obs_point, // starting position [lng, lat]
+zoom: 7 // starting zoom = 1 mais on prend 10
+});
+var here_marker = new maplibregl.Marker()
+.setLngLat(obs_point)
+.addTo(map);
+
+geojson.features.forEach(function (marker) {
+// create a DOM element for the marker
+var el = document.createElement('div');
+el.className = 'poi_marker';
+el.style.backgroundImage =
+'url(https://placekitten.com/g/' +
+marker.properties.iconSize.join('/') +
+'/)';
+el.style.width = marker.properties.iconSize[0] + 'px';
+el.style.height = marker.properties.iconSize[1] + 'px';
+ 
+// el.addEventListener('click', function () {
+//window.alert(marker.properties.message);
+// });
+
+// add marker to map
+new maplibregl.Marker(el)
+.setLngLat(marker.geometry.coordinates)
+.addTo(map);
+});
+
+// ajout des cercles
+
+const tableau_frequence5km=[{angle:"30",nbpoi:"3"},{angle:"60",nbpoi:"6"},{angle:"80",nbpoi:"8"},{angle:"90",nbpoi:"9"},{angle:"100",nbpoi:"10"}];
+// window.alert("Cercle"+tableau_frequence5km[0].angle);
+window.alert("a-t-on un 30 ? "+); // +some(tableau_frequence5km.angle==30)
+for (let i = 0; i < 360; i++) {
+tableau_frequence5km.forEach()
+
+// on dessine larc de cercle
+// on colorie larc de cercle
+	 if((tableau_frequence5km.angle==i) == TRUE){
+	 window.alert("Angle"+i);
+	 };
+};
+
+</script>
+ 
+</body>
+</html>
