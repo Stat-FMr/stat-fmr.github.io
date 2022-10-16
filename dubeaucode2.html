@@ -56,23 +56,11 @@
 } 
 </style>
 
-<div class="split left">
-  <div class="centered">
-    <img src="img_avatar2.png" alt="Avatar woman">
-    <h2>Jane Flex</h2>
-    <p>Some text.</p>
-  </div>
-</div>
-
-<div class="split right">
-  <div class="centered">
 	<div id="map">
     <!-- <img src="img_avatar.png" alt="Avatar man"> -->
     <!-- <h2>John Doe</h2> -->
     <!-- <p>Some text here too.</p> -->
 	</div>
-  </div>
-</div> 
 
 <script>
 
@@ -199,13 +187,13 @@ function POIAroundObs(unobspoint,despoi,unrayonmin=0,unrayonmax=10){
 // with the number of visible poi related to each degree
 function computeStatCircle(unobspoint,despoi,unrayon){
 const lecercle={'type': 'FeatureCollection','features':[]}; // debut du geojson du cercle
-window.alert("0despoivaut "+JSON.stringify(despoi));
+// window.alert("0despoivaut "+JSON.stringify(despoi));
 let letableau=POIAroundObs(unobspoint,despoi); // en fait, despoi est aussi mis à jour
-window.alert("1despoivaut "+JSON.stringify(despoi));
+// window.alert("1despoivaut "+JSON.stringify(despoi));
 // pour filter, voir https://www.freecodecamp.org/news/javascript-array-filter-tutorial-how-to-iterate-through-elements-in-an-array/
 // autre possibilite : let test = wtf.features.filter(([key, value]) => key.endsWith('A'))
 let test = letableau.features.filter(item => item.properties.angle == 64 & item.properties.pctvisible > 0.1);
-window.alert("7.longueur"+test.length);
+window.alert("7"+test.length);
 	<!-- let tableau=Array(360).fill(0); // initialisation du tableau -->
 	<!-- despoi.forEach(function(unpoi){ -->
 	<!-- // window.alert(unpoi.angle);  // YESSSS IT WORKS -->
@@ -223,11 +211,13 @@ window.alert("7.longueur"+test.length);
 		lecercle.features[i]=JSON.parse('{"type": "Feature",'+
 										' "properties": {"poivisible": "'+
 										letableau.features.filter(item => item.properties.angle == i & item.properties.pctvisible > 0.1).length
-										+'"},'+
+										+'", "azimut" : "' + i
+										+'" },'+
 										' "geometry": {"type": "Polygon", "coordinates": [[['+
 							coordcercle(unobspoint,unrayon-0.1,i)+'],['+coordcercle(unobspoint,unrayon+0.1,i)+'],['+coordcercle(unobspoint,unrayon+0.1,i+1)+'],['+coordcercle(unobspoint,unrayon-0.1,i+1)+
 							']]]}}');
 	};
+	window.alert("C'est la cercle "+JSON.stringify(lecercle));
 	return lecercle;
 };	
 
@@ -267,8 +257,8 @@ const larcdecercle={'type': 'FeatureCollection','features':[]}; // debut du geoj
 	lesgroupes.forEach(function(ungroupe){
 		lesgroupes.indexOf(ungroupe);
 		// window.alert("Le groupe :"+ungroupe+" a un index "+lesgroupes.indexOf(ungroupe)+"avec un min/max :"+
-		lesmins[lesgroupes.indexOf(ungroupe)]+"/"+lesmaxs[lesgroupes.indexOf(ungroupe)]
-		);
+		// lesmins[lesgroupes.indexOf(ungroupe)]+"/"+lesmaxs[lesgroupes.indexOf(ungroupe)]
+		// );
 		<!-- larcdecercle.features[lesgroupes.indexOf(ungroupe)]=JSON.parse('{"type": "Feature",'+ -->
 										<!-- ' "properties": {"poigroup": "'+ ungroupe +'"},'+ -->
 										<!-- ' "geometry": {"type": "Polygon", "coordinates": [[['+ -->
@@ -306,6 +296,7 @@ function drawMap(obs_point,a_geojson,a_circle,some_sectors){
 	var here_marker = new maplibregl.Marker()
 	.setLngLat(obs_point)
 	.addTo(map);
+	window.alert(JSON.stringify(a_circle));
 map.on('load', function () {
 		map.addSource('lecercle', {
 				'type': 'geojson',
@@ -333,6 +324,7 @@ map.on('load', function () {
 				'id': 'lesarcs',
 				'type': 'fill',
 				'source': 'lesarcs',
+				'layout': {},
 				'paint': {
  					'fill-color': '#088',  // le code à 3 caractères #abc est en fait un raccourci du code hexa "doublé" #aabbcc
 					'fill-opacity': 0.8
@@ -347,7 +339,7 @@ map.on('load', function () {
 					'fill-color': '#088',  // le code à 3 caractères #abc est en fait un raccourci du code hexa "doublé" #aabbcc
 					'fill-opacity': 0.8
 				},
-				'filter': ['==', 'nbpoi', '0']
+				'filter': ['==', 'poivisible', '0']
 			});
 				<!-- 'filter': ['==', '["get", "nbpoi"]', '0'] -->
 			
@@ -360,22 +352,44 @@ map.on('load', function () {
 					'fill-color': '#c03',  // le code à 3 caractères # abc est en fait un raccourci du code hexa "doublé" #aabbcc 
 					'fill-opacity': 0.8
 				},
-				'filter': ['>=', 'nbpoi', '1']
+				'filter': ['>=', 'poivisible', '1']
 			});
 
 	});
 };
+
+// FIN DES FONCTIONS
+
 const obs_point = [4.2261, 47.6683]; // FR:le point d'observation - EN:observation point
 // FR:ensemble des donnees des POI au format geojson avec coordonnees longitude puis latitude
 // EN:POI data in geojson format with coordinates in lonLat format
 // TODO: lecture d'un fichier geojson ou csv fourni par le client
-const poi_vector = {
+
+const data = require('./eolienne_bfc.json');
+console.log(data);
+
+fetch("./eolienne_bfc.json")
+// step 1
+.then(response => {
+   return response.json();
+})
+// step 2
+/*.then(data => data.features.forEach(function(unpoi){
+	if (unpoi.properties["LEG_MAT"] == "construite","accordée"){window.alert("une eolienne lue");};
+	}))*/
+// step 3
+.then(data => window.alert("enbfc "+data));
+//.then(data => const poi_vector = data);
+window.alert("lepremierpoiest"+poi_vector[0]);
+// poigroup
+
+/* const poi_vector = {
 'type': 'FeatureCollection',
 'features': [
 {
 'type': 'Feature',
 'properties': {
-'poigroup': 'Parc 1',
+'poigroup': 'Parc 3',
 'poiheight': 120 
 },
 'geometry': {
@@ -397,7 +411,7 @@ const poi_vector = {
 {
 'type': 'Feature',
 'properties': {
-'poigroup': 'Parc 2',
+'poigroup': 'Parc 1',
 'poiheight': 150 
 },
 'geometry': {
@@ -408,7 +422,7 @@ const poi_vector = {
 {
 'type': 'Feature',
 'properties': {
-'poigroup': 'Parc 3',
+'poigroup': 'Parc 2',
 'poiheight': 150 
 },
 'geometry': {
@@ -429,7 +443,8 @@ const poi_vector = {
 }
 ]
 };
-// fin du fichier geojson - end of geojson file
+ */
+ // fin du fichier geojson - end of geojson file
 
 // window.alert(JSON.stringify(POIAroundObs(obs_point,poi_vector,unrayonmin=0,unrayonmax=10)));
 // computeStatCircle(obs_point,poi_vector);
