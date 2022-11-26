@@ -306,6 +306,13 @@ map.on('load', function () {
 				'type': 'geojson',
 				'data': a_geojson
 			});	
+		map.setPaintProperty('building', 'fill-color', [
+			['zoom'],
+			15,
+			'#e2714b',
+			22,
+			'#eee695'
+			]);
 		map.addSource('lesarcs', {
 				'type': 'geojson',
 				'data': some_sectors
@@ -365,22 +372,22 @@ const obs_point = [4.2261, 47.6683]; // FR:le point d'observation - EN:observati
 // EN:POI data in geojson format with coordinates in lonLat format
 // TODO: lecture d'un fichier geojson ou csv fourni par le client
 
-const data = require('./eolienne_bfc.json');
-console.log(data);
+// const data = require('./eolienne_bfc.json');
+// console.log(data);
 
-fetch("./eolienne_bfc.json")
+// fetch("./eolienne_bfc.json")
 // step 1
-.then(response => {
-   return response.json();
-})
+//.then(response => {
+//   return response.json();
+//})
 // step 2
 /*.then(data => data.features.forEach(function(unpoi){
 	if (unpoi.properties["LEG_MAT"] == "construite","accordée"){window.alert("une eolienne lue");};
 	}))*/
 // step 3
-.then(data => window.alert("enbfc "+data));
+//.then(data => window.alert("enbfc "+data));
 //.then(data => const poi_vector = data);
-window.alert("lepremierpoiest"+poi_vector[0]);
+// window.alert("lepremierpoiest"+poi_vector[0]);
 // poigroup
 
 /* const poi_vector = {
@@ -449,6 +456,18 @@ window.alert("lepremierpoiest"+poi_vector[0]);
 // window.alert(JSON.stringify(POIAroundObs(obs_point,poi_vector,unrayonmin=0,unrayonmax=10)));
 // computeStatCircle(obs_point,poi_vector);
 // poiGroupings(obs_point,poi_vector,5);
+poi_vector=[];
+uneurl="https://trouver.ternum-bfc.fr/dataset/823e3d64-cd5c-4b0d-bf52-db8036e7f5bd/resource/7d4e3b72-0ac2-4596-b3e0-29deffef8614/service_proxy?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=n_mat_eolien_p_r27_97e1489&OUTPUTFORMAT=geojson&CRSNAME=EPSG:4326";
+unereponse=fetch(uneurl)
+// step 1
+.then(response => {
+  return response.json();
+})
+// step 2
+.then(data => data.features.forEach(function(unpoi){
+	if (unpoi.properties["LEG_MAT"] == "construite","accordée"){window.alert("une eolienne lue");poi_vector.push(unpoi);};
+	}))
+
 drawMap(obs_point,poi_vector,computeStatCircle(obs_point,poi_vector,5),poiGroupings(obs_point,poi_vector,5))
 
 </script>
